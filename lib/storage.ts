@@ -23,7 +23,14 @@ function migrate(raw: Partial<AppStorage>): AppStorage {
     goals: raw.goals ?? [],
     earnedBadges: raw.earnedBadges ?? [],
     examRecords: raw.examRecords ?? [],
-    flashcards: raw.flashcards ?? [],
+    flashcards: (raw.flashcards ?? []).map((c) => ({
+      ...c,
+      nextReviewDate: c.nextReviewDate ?? null,
+      interval: c.interval ?? 1,
+      easeFactor: c.easeFactor ?? 2.5,
+      repetitions: c.repetitions ?? 0,
+    })),
+    weeklySchedule: raw.weeklySchedule ?? [],
     version: STORAGE_VERSION,
   };
 }

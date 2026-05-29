@@ -13,6 +13,7 @@ function diffDays(a: Date, b: Date): number {
 export function computeRecommendations(
   subjects: Subject[],
   sessions: StudySession[],
+  scheduledTodayIds: string[] = [],
   config = ALGO_CONFIG
 ): SubjectWithMeta[] {
   const today = new Date();
@@ -51,6 +52,7 @@ export function computeRecommendations(
         daysSinceLastStudy,
         totalMinutes,
         priorityScore,
+        isScheduledToday: scheduledTodayIds.includes(subject.id),
       };
     })
     .sort((a, b) => b.priorityScore - a.priorityScore);

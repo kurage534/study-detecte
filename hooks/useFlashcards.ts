@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Flashcard } from '@/lib/types';
 import { loadStorage, saveStorage } from '@/lib/storage';
+import { scheduleSM2 } from '@/lib/srs';
 
 export function useFlashcards() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
@@ -24,6 +25,10 @@ export function useFlashcards() {
       front: front.trim(),
       back: back.trim(),
       createdAt: new Date().toISOString(),
+      nextReviewDate: null,
+      interval: 1,
+      easeFactor: 2.5,
+      repetitions: 0,
     };
     persist([...flashcards, card]);
   }
@@ -36,5 +41,9 @@ export function useFlashcards() {
     persist(flashcards.filter((c) => c.id !== id));
   }
 
-  return { flashcards, addFlashcard, updateFlashcard, deleteFlashcard };
+  function reviewFlashcard(id: string, quality: 0 | 2) {
+    persist(flashcards.map((c) => c.id === id ? scheduleSM2(c, quality) : c));
+  }
+
+  return { flashcards, addFlashcard, updateFlashcard, deleteFlashcard, reviewFlashcard };
 }

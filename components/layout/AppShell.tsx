@@ -8,6 +8,7 @@ import { useGoals } from '@/hooks/useGoals';
 import { useExamRecords } from '@/hooks/useExamRecords';
 import { useNotification } from '@/hooks/useNotification';
 import { useFlashcards } from '@/hooks/useFlashcards';
+import { useWeeklySchedule } from '@/hooks/useWeeklySchedule';
 import { TabBar } from './TabBar';
 import { BackupModal } from './BackupModal';
 import { TodayPage } from '@/components/today/TodayPage';
@@ -35,7 +36,10 @@ export function AppShell() {
   const { goals, earnedBadges, newBadge, setGoal, dismissNewBadge } = useGoals(subjects, sessions);
   const { examRecords, addExamRecord, deleteExamRecord } = useExamRecords();
   const { showBanner, requestPermission, dismissBanner } = useNotification(sessions);
-  const { flashcards, addFlashcard, updateFlashcard, deleteFlashcard } = useFlashcards();
+  const { flashcards, addFlashcard, updateFlashcard, deleteFlashcard, reviewFlashcard } = useFlashcards();
+  const { schedule, setSubjectSchedule, getTodaySchedule } = useWeeklySchedule();
+
+  const scheduledTodayIds = getTodaySchedule();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -88,7 +92,13 @@ export function AppShell() {
 
       <main className="mx-auto max-w-lg px-4 py-4 pb-24">
         {activeTab === 'today' && (
-          <TodayPage subjects={subjects} sessions={sessions} onAddSession={addSession} />
+          <TodayPage
+            subjects={subjects}
+            sessions={sessions}
+            goals={goals}
+            scheduledTodayIds={scheduledTodayIds}
+            onAddSession={addSession}
+          />
         )}
         {activeTab === 'timer' && (
           <TimerPage subjects={subjects} onAddSession={addSession} />
@@ -98,10 +108,12 @@ export function AppShell() {
             subjects={subjects}
             sessions={sessions}
             goals={goals}
+            schedule={schedule}
             onAdd={addSubject}
             onWeaknessChange={updateSubjectWeakness}
             onGoalChange={setGoal}
             onDelete={deleteSubject}
+            onSetSchedule={setSubjectSchedule}
           />
         )}
         {activeTab === 'cards' && (
@@ -111,6 +123,7 @@ export function AppShell() {
             onAdd={addFlashcard}
             onUpdate={updateFlashcard}
             onDelete={deleteFlashcard}
+            onReview={reviewFlashcard}
           />
         )}
         {activeTab === 'sessions' && (

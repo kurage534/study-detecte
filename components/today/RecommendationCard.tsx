@@ -49,6 +49,11 @@ export function RecommendationCard({ item, rank, subjects, onAddSession }: Props
                 おすすめ
               </span>
             )}
+            {item.isScheduledToday && (
+              <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                今日の予定
+              </span>
+            )}
           </div>
           <span className={clsx('shrink-0 text-sm font-medium', color)}>{label}</span>
         </div>

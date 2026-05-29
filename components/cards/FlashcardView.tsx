@@ -8,9 +8,10 @@ interface Props {
   cards: Flashcard[];
   subject: Subject;
   onClose: () => void;
+  onReview?: (id: string, quality: 0 | 2) => void;
 }
 
-export function FlashcardView({ cards, subject, onClose }: Props) {
+export function FlashcardView({ cards, subject, onClose, onReview }: Props) {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [results, setResults] = useState<Record<string, 'ok' | 'ng'>>({});
@@ -23,6 +24,7 @@ export function FlashcardView({ cards, subject, onClose }: Props) {
   function next(result?: 'ok' | 'ng') {
     if (result && card) {
       setResults((r) => ({ ...r, [card.id]: result }));
+      onReview?.(card.id, result === 'ok' ? 2 : 0);
     }
     if (index + 1 >= cards.length) {
       setFinished(true);
@@ -133,6 +135,9 @@ export function FlashcardView({ cards, subject, onClose }: Props) {
           >
             <span className="mb-3 text-xs font-medium uppercase tracking-wider" style={{ color: subject.color }}>答え</span>
             <p className="text-center text-lg font-medium text-gray-900">{card.back}</p>
+            {card.nextReviewDate && (
+              <p className="mt-3 text-xs text-gray-400">次の復習: {card.nextReviewDate}</p>
+            )}
           </div>
         </div>
       </div>
