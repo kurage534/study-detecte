@@ -9,6 +9,7 @@ import { SubjectTimeChart } from './SubjectTimeChart';
 import { GoalProgressSection } from './GoalProgressSection';
 import { BadgeGrid } from './BadgeGrid';
 import { ExamScoreChart } from './ExamScoreChart';
+import { StudyCalendar } from './StudyCalendar';
 
 interface Props {
   subjects: Subject[];
@@ -71,6 +72,11 @@ export function StatsPage({ subjects, sessions, goals, earnedBadges, examRecords
       <div>
         <h3 className="mb-2 text-sm font-medium text-gray-700">テスト結果</h3>
         <ExamScoreChart examRecords={examRecords} subjects={subjects} />
+      </div>
+
+      <div>
+        <h3 className="mb-2 text-sm font-medium text-gray-700">学習カレンダー</h3>
+        <StudyCalendar sessions={sessions} />
       </div>
 
       <div>

@@ -21,7 +21,7 @@ export const ALGO_CONFIG = {
   maxDaysForFullRecencyScore: 14,
 };
 
-export const STORAGE_VERSION = 2;
+export const STORAGE_VERSION = 3;
 
 export const BADGE_META: Record<BadgeType, { emoji: string; label: string; description: string }> = {
   streak_7:      { emoji: '🔥', label: '7日連続', description: '7日間連続で学習した' },

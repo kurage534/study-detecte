@@ -23,6 +23,7 @@ function migrate(raw: Partial<AppStorage>): AppStorage {
     goals: raw.goals ?? [],
     earnedBadges: raw.earnedBadges ?? [],
     examRecords: raw.examRecords ?? [],
+    flashcards: raw.flashcards ?? [],
     version: STORAGE_VERSION,
   };
 }

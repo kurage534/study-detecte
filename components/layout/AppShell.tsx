@@ -7,10 +7,13 @@ import { useSessions } from '@/hooks/useSessions';
 import { useGoals } from '@/hooks/useGoals';
 import { useExamRecords } from '@/hooks/useExamRecords';
 import { useNotification } from '@/hooks/useNotification';
+import { useFlashcards } from '@/hooks/useFlashcards';
 import { TabBar } from './TabBar';
+import { BackupModal } from './BackupModal';
 import { TodayPage } from '@/components/today/TodayPage';
 import { TimerPage } from '@/components/timer/TimerPage';
 import { SubjectsPage } from '@/components/subjects/SubjectsPage';
+import { CardsPage } from '@/components/cards/CardsPage';
 import { SessionsPage } from '@/components/sessions/SessionsPage';
 import { StatsPage } from '@/components/stats/StatsPage';
 import { BADGE_META } from '@/lib/constants';
@@ -19,23 +22,37 @@ const TAB_TITLES: Record<TabId, string> = {
   today:    '今日の学習',
   timer:    'タイマー',
   subjects: '教科管理',
+  cards:    '暗記カード',
   sessions: '学習記録',
   stats:    '統計',
 };
 
 export function AppShell() {
   const [activeTab, setActiveTab] = useState<TabId>('today');
+  const [backupOpen, setBackupOpen] = useState(false);
   const { subjects, addSubject, updateSubjectWeakness, deleteSubject } = useSubjects();
   const { sessions, addSession, deleteSession } = useSessions();
   const { goals, earnedBadges, newBadge, setGoal, dismissNewBadge } = useGoals(subjects, sessions);
   const { examRecords, addExamRecord, deleteExamRecord } = useExamRecords();
   const { showBanner, requestPermission, dismissBanner } = useNotification(sessions);
+  const { flashcards, addFlashcard, updateFlashcard, deleteFlashcard } = useFlashcards();
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-4">
-        <div className="mx-auto max-w-lg">
+        <div className="mx-auto flex max-w-lg items-center justify-between">
           <h1 className="text-lg font-bold text-gray-900">{TAB_TITLES[activeTab]}</h1>
+          <button
+            onClick={() => setBackupOpen(true)}
+            className="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            aria-label="バックアップ・復元"
+            title="バックアップ・復元"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -87,6 +104,15 @@ export function AppShell() {
             onDelete={deleteSubject}
           />
         )}
+        {activeTab === 'cards' && (
+          <CardsPage
+            subjects={subjects}
+            flashcards={flashcards}
+            onAdd={addFlashcard}
+            onUpdate={updateFlashcard}
+            onDelete={deleteFlashcard}
+          />
+        )}
         {activeTab === 'sessions' && (
           <SessionsPage
             subjects={subjects}
@@ -110,6 +136,12 @@ export function AppShell() {
       </main>
 
       <TabBar activeTab={activeTab} onChange={setActiveTab} />
+
+      <BackupModal
+        open={backupOpen}
+        onClose={() => setBackupOpen(false)}
+        onRestored={() => {}}
+      />
     </div>
   );
 }

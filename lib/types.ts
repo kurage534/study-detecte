@@ -47,12 +47,21 @@ export interface ExamRecord {
   createdAt: string;
 }
 
+export interface Flashcard {
+  id: string;
+  subjectId: SubjectId;
+  front: string; // 問題・用語
+  back: string;  // 答え・説明
+  createdAt: string;
+}
+
 export interface AppStorage {
   subjects: Subject[];
   sessions: StudySession[];
   goals: SubjectGoal[];
   earnedBadges: EarnedBadge[];
   examRecords: ExamRecord[];
+  flashcards: Flashcard[];
   version: number;
 }
 
@@ -76,4 +85,4 @@ export interface SubjectTotals {
   totalMinutes: number;
 }
 
-export type TabId = 'today' | 'timer' | 'subjects' | 'sessions' | 'stats';
+export type TabId = 'today' | 'timer' | 'subjects' | 'cards' | 'sessions' | 'stats';

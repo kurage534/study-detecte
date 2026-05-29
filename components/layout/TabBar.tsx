@@ -1,4 +1,4 @@
-import { CalendarDays, Timer, BookOpen, PenLine, BarChart2 } from 'lucide-react';
+import { CalendarDays, Timer, BookOpen, PenLine, BarChart2, Layers } from 'lucide-react';
 import type { TabId } from '@/lib/types';
 import { clsx } from 'clsx';
 
@@ -11,6 +11,7 @@ const TABS: { id: TabId; label: string; Icon: React.ElementType }[] = [
   { id: 'today',    label: '今日',     Icon: CalendarDays },
   { id: 'timer',    label: 'タイマー', Icon: Timer },
   { id: 'subjects', label: '教科',     Icon: BookOpen },
+  { id: 'cards',    label: 'カード',   Icon: Layers },
   { id: 'sessions', label: '記録',     Icon: PenLine },
   { id: 'stats',    label: '統計',     Icon: BarChart2 },
 ];
