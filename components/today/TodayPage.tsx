@@ -3,7 +3,6 @@
 import type { Subject, StudySession, SubjectGoal } from '@/lib/types';
 import { computeRecommendations } from '@/lib/recommendation';
 import { RecommendationCard } from './RecommendationCard';
-import { CoachPanel } from '@/components/ai/CoachPanel';
 
 interface Props {
   subjects: Subject[];
@@ -13,7 +12,7 @@ interface Props {
   onAddSession: (subjectId: string, durationMinutes: number, date: string, notes: string) => void;
 }
 
-export function TodayPage({ subjects, sessions, goals, scheduledTodayIds, onAddSession }: Props) {
+export function TodayPage({ subjects, sessions, scheduledTodayIds, onAddSession }: Props) {
   const recommendations = computeRecommendations(subjects, sessions, scheduledTodayIds);
   const today = new Date().toLocaleDateString('ja-JP', {
     year: 'numeric',
@@ -44,8 +43,6 @@ export function TodayPage({ subjects, sessions, goals, scheduledTodayIds, onAddS
           ))}
         </div>
       )}
-
-      <CoachPanel subjects={subjects} sessions={sessions} goals={goals} />
     </div>
   );
 }
