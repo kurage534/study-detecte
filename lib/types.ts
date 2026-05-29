@@ -18,9 +18,41 @@ export interface StudySession {
   createdAt: string;
 }
 
+export interface SubjectGoal {
+  subjectId: SubjectId;
+  weeklyMinutes: number;
+}
+
+export type BadgeType =
+  | 'streak_7'
+  | 'streak_30'
+  | 'total_10h'
+  | 'goal_achieved'
+  | 'all_subjects';
+
+export interface EarnedBadge {
+  id: string;
+  type: BadgeType;
+  earnedAt: string;
+  subjectId?: SubjectId;
+}
+
+export interface ExamRecord {
+  id: string;
+  subjectId: SubjectId;
+  examName: string;
+  score: number;
+  maxScore: number;
+  date: string; // "YYYY-MM-DD"
+  createdAt: string;
+}
+
 export interface AppStorage {
   subjects: Subject[];
   sessions: StudySession[];
+  goals: SubjectGoal[];
+  earnedBadges: EarnedBadge[];
+  examRecords: ExamRecord[];
   version: number;
 }
 

@@ -16,15 +16,26 @@ function createPresetSubjects(): Subject[] {
   }));
 }
 
+function migrate(raw: Partial<AppStorage>): AppStorage {
+  return {
+    subjects: raw.subjects ?? createPresetSubjects(),
+    sessions: raw.sessions ?? [],
+    goals: raw.goals ?? [],
+    earnedBadges: raw.earnedBadges ?? [],
+    examRecords: raw.examRecords ?? [],
+    version: STORAGE_VERSION,
+  };
+}
+
 export function loadStorage(): AppStorage {
   if (typeof window === 'undefined') {
-    return { subjects: createPresetSubjects(), sessions: [], version: STORAGE_VERSION };
+    return migrate({});
   }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return seedStorage();
-    const parsed = JSON.parse(raw) as AppStorage;
-    return parsed;
+    const parsed = JSON.parse(raw) as Partial<AppStorage>;
+    return migrate(parsed);
   } catch {
     return seedStorage();
   }
@@ -40,11 +51,7 @@ export function saveStorage(data: AppStorage): void {
 }
 
 function seedStorage(): AppStorage {
-  const initial: AppStorage = {
-    subjects: createPresetSubjects(),
-    sessions: [],
-    version: STORAGE_VERSION,
-  };
+  const initial = migrate({});
   saveStorage(initial);
   return initial;
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
-import type { Subject, StudySession } from '@/lib/types';
+import type { Subject, StudySession, SubjectGoal } from '@/lib/types';
 import { SubjectCard } from './SubjectCard';
 import { SubjectForm } from './SubjectForm';
 import { Button } from '@/components/ui/button';
@@ -10,13 +10,16 @@ import { Button } from '@/components/ui/button';
 interface Props {
   subjects: Subject[];
   sessions: StudySession[];
+  goals: SubjectGoal[];
   onAdd: (name: string, weaknessLevel: 1 | 2 | 3 | 4 | 5) => void;
   onWeaknessChange: (id: string, level: 1 | 2 | 3 | 4 | 5) => void;
+  onGoalChange: (subjectId: string, weeklyMinutes: number) => void;
   onDelete: (id: string) => void;
 }
 
-export function SubjectsPage({ subjects, sessions, onAdd, onWeaknessChange, onDelete }: Props) {
+export function SubjectsPage({ subjects, sessions, goals, onAdd, onWeaknessChange, onGoalChange, onDelete }: Props) {
   const [formOpen, setFormOpen] = useState(false);
+  const goalMap = new Map(goals.map((g) => [g.subjectId, g]));
 
   return (
     <div className="space-y-4">
@@ -34,7 +37,9 @@ export function SubjectsPage({ subjects, sessions, onAdd, onWeaknessChange, onDe
             key={s.id}
             subject={s}
             sessions={sessions}
+            goal={goalMap.get(s.id)}
             onWeaknessChange={onWeaknessChange}
+            onGoalChange={onGoalChange}
             onDelete={onDelete}
           />
         ))}

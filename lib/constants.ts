@@ -1,4 +1,4 @@
-import type { Subject } from './types';
+import type { Subject, BadgeType } from './types';
 
 export const STORAGE_KEY = 'study-tracker-v1';
 
@@ -21,4 +21,12 @@ export const ALGO_CONFIG = {
   maxDaysForFullRecencyScore: 14,
 };
 
-export const STORAGE_VERSION = 1;
+export const STORAGE_VERSION = 2;
+
+export const BADGE_META: Record<BadgeType, { emoji: string; label: string; description: string }> = {
+  streak_7:      { emoji: '🔥', label: '7日連続', description: '7日間連続で学習した' },
+  streak_30:     { emoji: '🏆', label: '30日連続', description: '30日間連続で学習した' },
+  total_10h:     { emoji: '📚', label: '10時間達成', description: '1つの教科で累計10時間学習した' },
+  goal_achieved: { emoji: '🎯', label: '週目標達成', description: '教科の週間目標時間を達成した' },
+  all_subjects:  { emoji: '🌟', label: '全教科制覇', description: '直近7日間で全教科を学習した' },
+};
