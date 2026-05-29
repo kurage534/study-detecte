@@ -1,4 +1,4 @@
-import { CalendarDays, BookOpen, PenLine, BarChart2 } from 'lucide-react';
+import { CalendarDays, Timer, BookOpen, PenLine, BarChart2 } from 'lucide-react';
 import type { TabId } from '@/lib/types';
 import { clsx } from 'clsx';
 
@@ -8,10 +8,11 @@ interface Props {
 }
 
 const TABS: { id: TabId; label: string; Icon: React.ElementType }[] = [
-  { id: 'today', label: '今日', Icon: CalendarDays },
-  { id: 'subjects', label: '教科', Icon: BookOpen },
-  { id: 'sessions', label: '記録', Icon: PenLine },
-  { id: 'stats', label: '統計', Icon: BarChart2 },
+  { id: 'today',    label: '今日',     Icon: CalendarDays },
+  { id: 'timer',    label: 'タイマー', Icon: Timer },
+  { id: 'subjects', label: '教科',     Icon: BookOpen },
+  { id: 'sessions', label: '記録',     Icon: PenLine },
+  { id: 'stats',    label: '統計',     Icon: BarChart2 },
 ];
 
 export function TabBar({ activeTab, onChange }: Props) {
@@ -23,7 +24,7 @@ export function TabBar({ activeTab, onChange }: Props) {
             key={id}
             onClick={() => onChange(id)}
             className={clsx(
-              'flex flex-1 flex-col items-center gap-0.5 py-3 text-xs transition-colors',
+              'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] transition-colors',
               activeTab === id ? 'text-indigo-600' : 'text-gray-500 hover:text-gray-700'
             )}
             aria-label={label}

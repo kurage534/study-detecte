@@ -76,4 +76,4 @@ export interface SubjectTotals {
   totalMinutes: number;
 }
 
-export type TabId = 'today' | 'subjects' | 'sessions' | 'stats';
+export type TabId = 'today' | 'timer' | 'subjects' | 'sessions' | 'stats';
