@@ -35,6 +35,39 @@ const MODE_COLORS: Record<Mode, string> = {
 
 const QUICK_MINUTES = [5, 10, 15, 20, 30, 45, 60, 90];
 
+const TIMER_STATE_KEY = 'timer-active-state';
+
+interface SavedTimerState {
+  endTime: number;         // Date.now() + remaining ms
+  mode: Mode;
+  subjectId: string;
+  totalSeconds: number;
+  customTotalSecs: number;
+  pomodoroCount: number;
+  completedFocusSecs: number;
+}
+
+function saveTimerState(state: SavedTimerState) {
+  try {
+    localStorage.setItem(TIMER_STATE_KEY, JSON.stringify(state));
+  } catch { /* ignore */ }
+}
+
+function clearTimerState() {
+  try {
+    localStorage.removeItem(TIMER_STATE_KEY);
+  } catch { /* ignore */ }
+}
+
+function loadTimerState(): SavedTimerState | null {
+  try {
+    const raw = localStorage.getItem(TIMER_STATE_KEY);
+    return raw ? (JSON.parse(raw) as SavedTimerState) : null;
+  } catch {
+    return null;
+  }
+}
+
 function pad(n: number): string {
   return n.toString().padStart(2, '0');
 }
@@ -54,30 +87,35 @@ export function TimerPage({ subjects, onAddSession }: Props) {
   const [sessionFormOpen, setSessionFormOpen] = useState(false);
   const [pendingMinutes, setPendingMinutes] = useState(0);
 
+  // Absolute end timestamp when timer is running
+  const endTimeRef = useRef<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const totalSecondsRef = useRef(PRESET_SECONDS.focus);
 
   const totalSeconds = mode === 'custom' ? customTotalSecs : PRESET_SECONDS[mode];
-  const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
-  const strokeOffset = CIRCUMFERENCE * progress;
-  const color = MODE_COLORS[mode];
+  totalSecondsRef.current = totalSeconds;
+
   const isStudyMode = mode === 'focus' || mode === 'custom';
 
-  const handleComplete = useCallback(() => {
+  const handleComplete = useCallback((completedTotalSecs: number, currentMode: Mode, currentPomodoroCount: number) => {
+    clearTimerState();
+    endTimeRef.current = null;
     setIsRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
+    setSecondsLeft(0);
 
-    if (isStudyMode) {
-      const elapsed = Math.round(totalSeconds / 60);
-      setCompletedFocusSecs((p) => p + totalSeconds);
+    const studyMode = currentMode === 'focus' || currentMode === 'custom';
 
-      if (mode === 'focus') {
-        setPomodoroCount((c) => {
-          const next = c + 1;
-          const nextMode: Exclude<Mode, 'custom'> = next % 4 === 0 ? 'long_break' : 'short_break';
-          setMode(nextMode);
-          setSecondsLeft(PRESET_SECONDS[nextMode]);
-          return next;
-        });
+    if (studyMode) {
+      const elapsed = Math.round(completedTotalSecs / 60);
+      setCompletedFocusSecs((p) => p + completedTotalSecs);
+
+      if (currentMode === 'focus') {
+        const next = currentPomodoroCount + 1;
+        setPomodoroCount(next);
+        const nextMode: Exclude<Mode, 'custom'> = next % 4 === 0 ? 'long_break' : 'short_break';
+        setMode(nextMode);
+        setSecondsLeft(PRESET_SECONDS[nextMode]);
       }
 
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
@@ -95,27 +133,98 @@ export function TimerPage({ subjects, onAddSession }: Props) {
         new Notification('休憩終了！', { body: '集中タイムを始めましょう 💪', icon: '/icon.png' });
       }
     }
-  }, [mode, totalSeconds, isStudyMode]);
+  }, []);
 
+  // Restore timer state on mount (including after app close)
   useEffect(() => {
-    if (!isRunning) return;
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          handleComplete();
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
+    const saved = loadTimerState();
+    if (!saved) return;
+    const remaining = Math.ceil((saved.endTime - Date.now()) / 1000);
+    if (remaining <= 0) {
+      // Timer finished while app was closed
+      clearTimerState();
+      handleComplete(saved.totalSeconds, saved.mode, saved.pomodoroCount);
+    } else {
+      // Restore running timer
+      setMode(saved.mode);
+      setSubjectId(saved.subjectId);
+      setCustomTotalSecs(saved.customTotalSecs);
+      setPomodoroCount(saved.pomodoroCount);
+      setCompletedFocusSecs(saved.completedFocusSecs);
+      setSecondsLeft(remaining);
+      endTimeRef.current = saved.endTime;
+      setIsRunning(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Main tick: recompute from wall clock time
+  useEffect(() => {
+    if (!isRunning || endTimeRef.current === null) return;
+
+    const tick = () => {
+      const remaining = Math.ceil((endTimeRef.current! - Date.now()) / 1000);
+      if (remaining <= 0) {
+        handleComplete(totalSecondsRef.current, mode, pomodoroCount);
+      } else {
+        setSecondsLeft(remaining);
+      }
+    };
+
+    tick(); // run immediately to sync after visibility change
+    intervalRef.current = setInterval(tick, 500);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isRunning, handleComplete]);
+  }, [isRunning, handleComplete, mode, pomodoroCount]);
+
+  // Recalculate when tab becomes visible again
+  useEffect(() => {
+    function onVisibilityChange() {
+      if (document.visibilityState === 'visible' && isRunning && endTimeRef.current !== null) {
+        const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
+        if (remaining <= 0) {
+          handleComplete(totalSecondsRef.current, mode, pomodoroCount);
+        } else {
+          setSecondsLeft(remaining);
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [isRunning, handleComplete, mode, pomodoroCount]);
+
+  function startTimer() {
+    endTimeRef.current = Date.now() + secondsLeft * 1000;
+    saveTimerState({
+      endTime: endTimeRef.current,
+      mode,
+      subjectId,
+      totalSeconds,
+      customTotalSecs,
+      pomodoroCount,
+      completedFocusSecs,
+    });
+    setIsRunning(true);
+  }
+
+  function pauseTimer() {
+    clearTimerState();
+    endTimeRef.current = null;
+    setIsRunning(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }
+
+  function toggleRunning() {
+    if (isRunning) {
+      pauseTimer();
+    } else {
+      startTimer();
+    }
+  }
 
   function switchMode(m: Mode) {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsRunning(false);
+    pauseTimer();
     setMode(m);
     if (m === 'custom') {
       const mins = parseInt(customMinutes, 10);
@@ -132,8 +241,7 @@ export function TimerPage({ subjects, onAddSession }: Props) {
     const secs = mins * 60;
     setCustomTotalSecs(secs);
     setSecondsLeft(secs);
-    setIsRunning(false);
-    if (intervalRef.current) clearInterval(intervalRef.current);
+    pauseTimer();
   }
 
   function handleCustomInputBlur() {
@@ -142,8 +250,7 @@ export function TimerPage({ subjects, onAddSession }: Props) {
   }
 
   function reset() {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setIsRunning(false);
+    pauseTimer();
     if (mode === 'custom') {
       setSecondsLeft(customTotalSecs);
     } else {
@@ -152,9 +259,12 @@ export function TimerPage({ subjects, onAddSession }: Props) {
   }
 
   function skip() {
-    handleComplete();
+    handleComplete(totalSeconds, mode, pomodoroCount);
   }
 
+  const progress = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
+  const strokeOffset = CIRCUMFERENCE * progress;
+  const color = MODE_COLORS[mode];
   const mins = Math.floor(secondsLeft / 60);
   const secs = secondsLeft % 60;
   const totalCompletedMins = Math.round(completedFocusSecs / 60);
@@ -245,6 +355,11 @@ export function TimerPage({ subjects, onAddSession }: Props) {
         </div>
       )}
 
+      {/* Running indicator */}
+      {isRunning && (
+        <p className="text-xs text-green-600 font-medium">● アプリを閉じてもタイマーは動き続けます</p>
+      )}
+
       {/* Circular timer */}
       <div className="relative flex items-center justify-center">
         <svg width={200} height={200} className="-rotate-90">
@@ -283,7 +398,7 @@ export function TimerPage({ subjects, onAddSession }: Props) {
           <RotateCcw className="h-5 w-5" />
         </button>
         <button
-          onClick={() => setIsRunning((r) => !r)}
+          onClick={toggleRunning}
           disabled={subjects.length === 0 && isStudyMode}
           className="rounded-full px-8 py-4 text-white font-semibold shadow-lg transition-all active:scale-95 disabled:opacity-50"
           style={{ backgroundColor: color }}
