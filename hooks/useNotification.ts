@@ -5,6 +5,7 @@ import type { StudySession } from '@/lib/types';
 
 const NOTIF_KEY = 'study-tracker-last-notif';
 const BANNER_DISMISSED_KEY = 'study-tracker-notif-dismissed';
+const NOTIF_ENABLED_KEY = 'study-tracker-notif-enabled';
 const STUDY_CACHE_NAME = 'study-status-v1';
 const STUDY_STATUS_KEY = '/study-status';
 
@@ -44,11 +45,13 @@ async function registerPeriodicSync(): Promise<void> {
 export function useNotification(sessions: StudySession[]) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(true);
 
   useEffect(() => {
     if (typeof Notification === 'undefined') return;
     setPermission(Notification.permission);
     setBannerDismissed(localStorage.getItem(BANNER_DISMISSED_KEY) === '1');
+    setNotifEnabled(localStorage.getItem(NOTIF_ENABLED_KEY) !== '0');
   }, []);
 
   const hasStudiedToday = sessions.some((s) => s.date === todayStr());
@@ -62,6 +65,7 @@ export function useNotification(sessions: StudySession[]) {
   useEffect(() => {
     if (typeof Notification === 'undefined') return;
     if (Notification.permission !== 'granted') return;
+    if (!notifEnabled) return;
     if (hasStudiedToday) return;
 
     const lastNotif = localStorage.getItem(NOTIF_KEY);
@@ -97,10 +101,15 @@ export function useNotification(sessions: StudySession[]) {
     setBannerDismissed(true);
   }
 
+  function toggleNotification(enabled: boolean) {
+    localStorage.setItem(NOTIF_ENABLED_KEY, enabled ? '1' : '0');
+    setNotifEnabled(enabled);
+  }
+
   const showBanner =
     !bannerDismissed &&
     permission === 'default' &&
     typeof Notification !== 'undefined';
 
-  return { permission, hasStudiedToday, showBanner, requestPermission, dismissBanner };
+  return { permission, hasStudiedToday, notifEnabled, showBanner, requestPermission, dismissBanner, toggleNotification };
 }

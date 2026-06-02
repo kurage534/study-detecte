@@ -35,7 +35,7 @@ export function AppShell() {
   const { sessions, addSession, deleteSession } = useSessions();
   const { goals, earnedBadges, newBadge, setGoal, dismissNewBadge } = useGoals(subjects, sessions);
   const { examRecords, addExamRecord, deleteExamRecord } = useExamRecords();
-  const { showBanner, requestPermission, dismissBanner } = useNotification(sessions);
+  const { showBanner, requestPermission, dismissBanner, permission: notifPermission, notifEnabled, toggleNotification } = useNotification(sessions);
   const { flashcards, addFlashcard, updateFlashcard, deleteFlashcard, reviewFlashcard } = useFlashcards();
   const { schedule, setSubjectSchedule, getTodaySchedule } = useWeeklySchedule();
 
@@ -154,6 +154,10 @@ export function AppShell() {
         open={backupOpen}
         onClose={() => setBackupOpen(false)}
         onRestored={() => {}}
+        notifPermission={notifPermission}
+        notifEnabled={notifEnabled}
+        onRequestPermission={requestPermission}
+        onToggleNotification={toggleNotification}
       />
     </div>
   );
